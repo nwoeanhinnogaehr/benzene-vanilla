@@ -11,5 +11,6 @@ libnetwork_a_CPPFLAGS = \
 -I/usr/local/lib/python2.7/site-packages/numpy/core/include/ \
 -lpython2.7
 
+AM_CXXFLAGS = -DNETWORK_DIR="\"$(PWD)\""
 
 DISTCLEANFILES = *~

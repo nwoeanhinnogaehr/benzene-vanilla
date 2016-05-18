@@ -4,8 +4,6 @@
 #include <iostream>
 #include "networkEvaluator.h"
 
-#define NETWORK_DIR "/Users/kenny_789/Summer_2015/benzene-vanilla/src/network/"
-
 networkEvaluator::networkEvaluator(){
 	setenv("PYTHONPATH",NETWORK_DIR,1);
 	Py_Initialize();
@@ -22,15 +20,15 @@ void networkEvaluator::evaluate(bool* state, int toPlay, double* scores){
 	const int n_state_dims = 3;
 	npy_intp state_dims[3] = {2,13,13};
 	PyObject *npState = PyArray_SimpleNewFromData(
-		n_state_dims, 
-		state_dims, 
-		NPY_BOOL, 
+		n_state_dims,
+		state_dims,
+		NPY_BOOL,
 		reinterpret_cast<void*>(state)
 	);
 	PyObject *npToPlay = PyInt_FromLong(toPlay);
 	PyObject *result = PyObject_CallMethodObjArgs(
-		this->evaluator, 
-		PyUnicode_FromString("evaluate"), 
+		this->evaluator,
+		PyUnicode_FromString("evaluate"),
 		npState,
 		npToPlay,
 		NULL

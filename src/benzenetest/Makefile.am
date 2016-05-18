@@ -51,3 +51,5 @@ $(BOOST_CPPFLAGS) \
 -I@top_srcdir@/src/commonengine
 
 DISTCLEANFILES = *~
+
+AM_CXXFLAGS = -pthread

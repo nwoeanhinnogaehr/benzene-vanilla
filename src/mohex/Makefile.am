@@ -32,6 +32,7 @@ mohex_LDADD = \
 ../book/libbook.a \
 ../hex/libhex.a \
 ../util/libutil.a \
+../network/libnetwork.a \
 $(FUEGO_BUILD)/smartgame/libfuego_smartgame.a \
 $(FUEGO_BUILD)/gtpengine/libfuego_gtpengine.a \
 $(DB_LIBS) \
@@ -65,6 +66,11 @@ $(BOOST_CPPFLAGS) \
 -I@top_srcdir@/src/book \
 -I@top_srcdir@/src/solver \
 -I@top_srcdir@/src/commonengine \
--I@top_srcdir@/src/network
+-I@top_srcdir@/src/network \
+-I/usr/include/python2.7 \
+-I/usr/local/lib/python2.7/site-packages/numpy/core/include/
+
+AM_CXXFLAGS = -pthread \
+-lpython2.7
 
 DISTCLEANFILES = *~

@@ -53,4 +53,6 @@ $(BOOST_CPPFLAGS) \
 -I@top_srcdir@/src/solver \
 -I@top_srcdir@/src/commonengine
 
+AM_CXXFLAGS = -pthread
+
 DISTCLEANFILES = *~
