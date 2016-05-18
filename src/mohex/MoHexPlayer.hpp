@@ -8,6 +8,7 @@
 #include "BenzenePlayer.hpp"
 #include "MoHexSearch.hpp"
 #include "MoHexPlayoutPolicy.hpp"
+#include "networkEvaluator.h"
 
 _BEGIN_BENZENE_NAMESPACE_
 
@@ -46,7 +47,7 @@ public:
         Performs multiple calls to Search(), removing the previous
         move returned from the consider set. This gives a rough
         ordering of the moves. */
-    void FindTopMoves(int num, const HexState& state, const Game& game, 
+    void FindTopMoves(int num, const HexState& state, const Game& game,
                       HexBoard& brd, const bitset_t& given_to_consider,
                       double maxTime, std::vector<HexPoint>& moves,
                       std::vector<double>& scores);
@@ -81,7 +82,7 @@ public:
     /** Search is initialized using the subttree of the last search
         tree rooted at the current position. */
     bool ReuseSubtree() const;
-    
+
     /** See ReuseSubtree() */
     void SetReuseSubtree(bool reuse);
 
@@ -107,11 +108,13 @@ public:
 
 protected:
     MoHexSharedPolicy m_shared_policy;
-    
+
     MoHexSearch m_search;
 
     std::string m_search_statistics;
-   
+
+    networkEvaluator m_eval;
+
     bool m_backup_ice_info;
 
     /** See MaxGames() */
@@ -134,17 +137,17 @@ protected:
 
     /** See UseRootData() */
     bool m_useRootData;
-    
+
     /** Generates a move in the given gamestate using uct. */
     HexPoint Search(const HexState& state, const Game& game,
                     HexBoard& brd, const bitset_t& consider,
                     double maxTime, double& score);
 
-    bool PerformPreSearch(HexBoard& brd, HexColor color, bitset_t& consider, 
+    bool PerformPreSearch(HexBoard& brd, HexColor color, bitset_t& consider,
                           double maxTime, PointSequence& winningSequence);
 
     void PrintParameters(HexColor color, double remaining);
-    
+
     SgUctTree* TryReuseSubtree(const MoHexSharedData& oldData,
                                MoHexSharedData& newData);
 

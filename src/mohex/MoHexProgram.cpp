@@ -17,7 +17,7 @@ using namespace benzene;
 MoHexProgram::MoHexProgram(std::string version,
                            std::string buildDate)
 {
-    SetInfo("MoHex", version, buildDate);
+    SetInfo("MoHexNet", version, buildDate);
     RegisterCmdLineArguments();
 }
 
@@ -44,7 +44,7 @@ void MoHexProgram::InitializeSystem()
 }
 
 void MoHexProgram::ShutdownSystem()
-{ 
+{
     LogConfig() << "MoHexProgram:: ShutdownSystem()\n";
     CommonProgram::ShutdownSystem();
 }

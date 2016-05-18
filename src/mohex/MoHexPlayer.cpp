@@ -28,13 +28,13 @@ void SortConsiderSet(const bitset_t& consider, const Resistance& resist,
                      std::vector<HexPoint>& moves)
 {
     std::vector<std::pair<HexEval, HexPoint> > mvsc;
-    for (BitsetIterator it(consider); it; ++it) 
+    for (BitsetIterator it(consider); it; ++it)
         mvsc.push_back(std::make_pair(-resist.Score(*it), *it));
     stable_sort(mvsc.begin(), mvsc.end());
     moves.clear();
     for (std::size_t i = 0; i < mvsc.size(); ++i)
         moves.push_back(mvsc[i].second);
-}                             
+}
 
 }
 
@@ -43,7 +43,7 @@ void SortConsiderSet(const bitset_t& consider, const Resistance& resist,
 MoHexPlayer::MoHexPlayer()
     : BenzenePlayer(),
       m_shared_policy(),
-      m_search(new HexThreadStateFactory(&m_shared_policy), 
+      m_search(new HexThreadStateFactory(&m_shared_policy),
                MoHexUtil::ComputeMaxNumMoves()),
       m_backup_ice_info(true),
       m_max_games(99999999),
@@ -100,8 +100,8 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                              double maxTime, double& score)
 {
     BenzeneAssert(!brd.GetGroups().IsGameOver());
-    HexColor color = state.ToPlay();   
-   
+    HexColor color = state.ToPlay();
+
     SgTimer totalElapsed;
     PrintParameters(color, maxTime);
 
@@ -110,7 +110,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
     SgTimer timer;
     bitset_t consider = given_to_consider;
     PointSequence winningSequence;
-    if (m_performPreSearch && PerformPreSearch(brd, color, consider, 
+    if (m_performPreSearch && PerformPreSearch(brd, color, consider,
                                                maxTime * 0.2, winningSequence))
     {
 	LogInfo() << "Winning sequence found before UCT search!\n"
@@ -123,7 +123,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
 
     maxTime -= timer.GetTime();
     maxTime = std::max(1.0, maxTime);
-        
+
     // Create the initial state data
     MoHexSharedData data(m_search.FillinMapBits());
     data.gameSequence = game.History();
@@ -151,6 +151,54 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         if (!initTree)
             LogInfo() << "No subtree to reuse.\n";
     }
+
+    // neural network integration
+    StoneBoard &board = data.rootState.Position();
+    // 13x13 only for now
+    BenzeneAssert(board.Width() == 13 && board.Height() == 13);
+    // If we are not resuing an old subtree, then create a new one and populate
+    // it with the output of the neural network
+    if (!initTree) {
+        timer.Start();
+
+        // add all moves being considered to the tree
+        initTree = &m_search.GetTempTree();
+        std::vector<SgUctMoveInfo> moves;
+        for (BitsetIterator it(data.rootConsider); it; ++it)
+            moves.push_back(SgUctMoveInfo(static_cast<SgMove>(*it)));
+        initTree->CreateChildren(0, initTree->Root(), moves);
+
+        // setup network input
+        const int boardN = 13;
+        const int boardSize = boardN * boardN;
+        bool netState[2 * boardSize];
+        double scores[boardSize];
+        for (int i = 0; i < boardSize * 2; i++) {
+            int x = i % boardN;
+            int y = i / boardN % boardN;
+            HexPoint point = HexPointUtil::coordsToPoint(x, y);
+            HexColor color = static_cast<HexColor>(1 - i / boardSize);
+            netState[i] = board.IsColor(point, color);
+        }
+
+        m_eval.evaluate(netState, 1 - state.ToPlay(), scores);
+
+        // init RAVE values of these with scores from neural net
+        // TODO is this optimal?
+        SgUctChildIterator it(*initTree, initTree->Root());
+        for (; it; ++it) {
+            const_cast<SgUctNode &>(*it).InitializeRaveValue(
+                scores[(*it).Move()], 1);
+        }
+
+        timer.Stop();
+        LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
+
+        maxTime -= timer.GetTime();
+        maxTime = std::max(0.5, maxTime); // I put this to 0.5 so testing
+                                          // with 1sec is fair
+    }
+
     m_search.SetSharedData(data);
 
     brd.GetPatternState().ClearPatternCheckStats();
@@ -176,7 +224,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
     LogInfo() << m_search_statistics << '\n';
 
     // Return move recommended by MoHexSearch
-    if (sequence.size() > 0) 
+    if (sequence.size() > 0)
         return static_cast<HexPoint>(sequence[0]);
 
     // It is possible that MoHexSearch did only 1 simulation (probably
@@ -195,16 +243,16 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
     consider set if there are non-losing moves in the consider set.
     If all moves are losing, perform no pruning, search will resist.
 
-    Returns true if there is a win, false otherwise. 
+    Returns true if there is a win, false otherwise.
 
     @todo Is it true that MoHex will resist in the strongest way
     possible?
 */
-bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color, 
-                                   bitset_t& consider, double maxTime, 
+bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color,
+                                   bitset_t& consider, double maxTime,
                                    PointSequence& winningSequence)
 {
-   
+
     bitset_t losing;
     HexColor other = !color;
     PointSequence seq;
@@ -215,7 +263,7 @@ bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color,
     resist.Evaluate(brd);
     std::vector<HexPoint> moves;
     SortConsiderSet(consider, resist, moves);
-    for (std::size_t i = 0; i < moves.size() && !foundWin; ++i) 
+    for (std::size_t i = 0; i < moves.size() && !foundWin; ++i)
     {
         if (elapsed.GetTime() > maxTime)
         {
@@ -229,7 +277,7 @@ bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color,
         {
             winningSequence = seq;
             foundWin = true;
-        }	
+        }
         else if (EndgameUtil::IsWonGame(brd, other))
             losing.set(moves[i]);
         seq.pop_back();
@@ -240,19 +288,19 @@ bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color,
     if (foundWin)
         return true;
 
-    // Backing up cannot cause this to happen, right? 
+    // Backing up cannot cause this to happen, right?
     BenzeneAssert(!EndgameUtil::IsDeterminedState(brd, color));
 
     // Use the backed-up ice info to shrink the moves to consider
-    if (m_backup_ice_info) 
+    if (m_backup_ice_info)
     {
-        bitset_t new_consider 
+        bitset_t new_consider
             = EndgameUtil::MovesToConsider(brd, color) & consider;
 
-        if (new_consider.count() < consider.count()) 
+        if (new_consider.count() < consider.count())
         {
-            consider = new_consider;       
-            LogFine() << "$$$$$$ new moves to consider $$$$$$" 
+            consider = new_consider;
+            LogFine() << "$$$$$$ new moves to consider $$$$$$"
                       << brd.Write(consider) << '\n';
         }
     }
@@ -260,13 +308,13 @@ bool MoHexPlayer::PerformPreSearch(HexBoard& brd, HexColor color,
     // Subtract any losing moves from the set we consider, unless all of them
     // are losing (in which case UCT search will find which one resists the
     // loss well).
-    if (losing.any()) 
+    if (losing.any())
     {
-	if (BitsetUtil::IsSubsetOf(consider, losing)) 
+	if (BitsetUtil::IsSubsetOf(consider, losing))
 	    LogInfo() << "************************************\n"
                       << " All UCT root children are losing!!\n"
                       << "************************************\n";
-        else 
+        else
         {
             LogFine() << "Removed losing moves: " << brd.Write(losing) << '\n';
 	    consider = consider - losing;
@@ -284,7 +332,7 @@ void MoHexPlayer::PrintParameters(HexColor color, double timeForMove)
 	      << "MaxGames: " << m_max_games << '\n'
 	      << "NumberThreads: " << m_search.NumberThreads() << '\n'
 	      << "MaxNodes: " << m_search.MaxNodes()
-	      << " (" << sizeof(SgUctNode)*m_search.MaxNodes() << " bytes)\n" 
+	      << " (" << sizeof(SgUctNode)*m_search.MaxNodes() << " bytes)\n"
 	      << "TimeForMove: " << timeForMove << '\n';
 }
 
@@ -335,7 +383,7 @@ SgUctTree* MoHexPlayer::TryReuseSubtree(const MoHexSharedData& oldData,
     // If no old knowledge for the new root in the old tree, then we
     // cannot reuse the tree (since the root is given its knowledge
     // and using this knowledge would require pruning the trees under
-    // the root's children) unless lazy delete is on. 
+    // the root's children) unless lazy delete is on.
     if (!samePosition)
     {
         MoHexSharedData::StateData oldDataState;
@@ -349,8 +397,8 @@ SgUctTree* MoHexPlayer::TryReuseSubtree(const MoHexSharedData& oldData,
                     "data for new root!\n";
                 return 0;
             }
-        } 
-        else 
+        }
+        else
         {
             if (!m_search.LazyDelete())
             {
@@ -375,7 +423,7 @@ SgUctTree* MoHexPlayer::TryReuseSubtree(const MoHexSharedData& oldData,
         sequence.push_back(newSequence[i].Point());
     }
     LogInfo() << "MovesPlayed: " << suffix << '\n';
-    
+
     // Extract the tree
     SgUctTree& tree = m_search.GetTempTree();
     SgUctTreeUtil::ExtractSubtree(m_search.Tree(), tree, sequence, true, 10.0);
@@ -398,12 +446,12 @@ SgUctTree* MoHexPlayer::TryReuseSubtree(const MoHexSharedData& oldData,
 
         HexState state(newState);
         CopyKnowledgeData(tree, tree.Root(), state, oldData, newData);
-        float kReuse = (oldData.stateData.Count() > 0) 
-            ? float(newData.stateData.Count()) 
+        float kReuse = (oldData.stateData.Count() > 0)
+            ? float(newData.stateData.Count())
               / float(oldData.stateData.Count())
             : 0.0f;
         int kReusePercent = static_cast<int>(100 * kReuse);
-        LogInfo() << "MoHexPlayer: Reusing " 
+        LogInfo() << "MoHexPlayer: Reusing "
                   << newData.stateData.Count() << " knowledge states ("
                   << kReusePercent << "%)\n";
         return &tree;
@@ -413,7 +461,7 @@ SgUctTree* MoHexPlayer::TryReuseSubtree(const MoHexSharedData& oldData,
 
 void MoHexPlayer::CopyKnowledgeData(const SgUctTree& tree,
                                     const SgUctNode& node,
-                                    HexState& state, 
+                                    HexState& state,
                                     const MoHexSharedData& oldData,
                                     MoHexSharedData& newData) const
 {
@@ -441,10 +489,10 @@ void MoHexPlayer::CopyKnowledgeData(const SgUctTree& tree,
 
 //----------------------------------------------------------------------------
 
-void MoHexPlayer::FindTopMoves(int num, const HexState& state, 
-                               const Game& game, HexBoard& brd, 
+void MoHexPlayer::FindTopMoves(int num, const HexState& state,
+                               const Game& game, HexBoard& brd,
                                const bitset_t& given_to_consider,
-                               double maxTime, 
+                               double maxTime,
                                std::vector<HexPoint>& moves,
                                std::vector<double>& scores)
 {

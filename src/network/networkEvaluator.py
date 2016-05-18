@@ -43,7 +43,7 @@ class networkEvaluator:
 			state = mirror_game(state)
 		played = np.logical_or(state[white,padding:boardsize+padding,padding:boardsize+padding],\
 		state[black,padding:boardsize+padding,padding:boardsize+padding]).flatten()
-		scores = self.evaluator(state)
+		scores = (self.evaluator(state) + 1) / 2
 		if(to_play == black):
 			return np.transpose(np.reshape(scores,(13,13))).flatten()
 		else:
