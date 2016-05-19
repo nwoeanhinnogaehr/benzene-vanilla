@@ -32,7 +32,7 @@ std::string KnowledgeThresholdToString(const std::vector<SgUctValue>& t)
     os << '\"';
     for (std::size_t i = 0; i < t.size(); ++i)
     {
-        if (i > 0) 
+        if (i > 0)
             os << ' ';
         os << t[i];
     }
@@ -91,7 +91,7 @@ std::string MoveSelectToString(SgUctMoveSelect moveSelect)
 
 MoHexEngine::MoHexEngine(int boardsize, MoHexPlayer& player)
     : CommonHtpEngine(boardsize),
-      m_player(player), 
+      m_player(player),
       m_book(0),
       m_bookCheck(m_book),
       m_bookCommands(m_game, m_pe, m_book, m_bookCheck, m_player),
@@ -112,9 +112,9 @@ MoHexEngine::MoHexEngine(int boardsize, MoHexPlayer& player)
     RegisterCmd("mohex-playout-move", &MoHexEngine::PlayoutMove);
     RegisterCmd("mohex-playout-play-pct", &MoHexEngine::PlayoutPlayPercent);
     RegisterCmd("mohex-playout-weights", &MoHexEngine::PlayoutWeights);
-    RegisterCmd("mohex-playout-global-weights", 
+    RegisterCmd("mohex-playout-global-weights",
                 &MoHexEngine::PlayoutGlobalWeights);
-    RegisterCmd("mohex-playout-local-weights", 
+    RegisterCmd("mohex-playout-local-weights",
                 &MoHexEngine::PlayoutLocalWeights);
     RegisterCmd("mohex-search-statistics", &MoHexEngine::SearchStatistics);
     RegisterCmd("mohex-pattern-match-on-cell",&MoHexEngine::PatternMatchOnCell);
@@ -174,7 +174,7 @@ HexPoint MoHexEngine::DoSearch(HexColor color, double maxTime)
     HexState state(m_game.Board(), color);
     if (m_useParallelSolver)
     {
-        PlayAndSolve ps(*m_pe.brd, *m_se.brd, m_player, m_dfpnSolver, 
+        PlayAndSolve ps(*m_pe.brd, *m_se.brd, m_player, m_dfpnSolver,
                         m_dfpnPositions, m_game);
         return ps.GenMove(state, maxTime);
     }
@@ -201,7 +201,7 @@ const SgUctNode* MoHexEngine::FindState(const Game& game) const
     const MoveSequence& oldSequence = search.SharedData().gameSequence;
     const MoveSequence& newSequence = game.History();
     if (oldSequence.size() > newSequence.size())
-        throw HtpFailure() << "Backtracked to earlier position"; 
+        throw HtpFailure() << "Backtracked to earlier position";
     if (!MoveSequenceUtil::IsPrefixOf(oldSequence, newSequence))
         throw HtpFailure() << "Not a continuation";
     const SgUctTree& tree = search.Tree();
@@ -224,7 +224,7 @@ void MoHexEngine::CmdAnalyzeCommands(HtpCommand& cmd)
 {
     CommonHtpEngine::CmdAnalyzeCommands(cmd);
     m_bookCommands.AddAnalyzeCommands(cmd);
-    cmd << 
+    cmd <<
         "param/MoHex Param/param_mohex\n"
         "param/MoHex Policy Param/param_mohex_policy\n"
         "none/MoHex Save Tree/mohex-save-tree %w\n"
@@ -239,7 +239,7 @@ void MoHexEngine::CmdAnalyzeCommands(HtpCommand& cmd)
         "move/MoHex Playout Move/mohex-playout-move\n"
         "pspairs/MoHex Playout Play Pct/mohex-playout-play-pct\n"
         "pspairs/MoHex Playout Weights/mohex-playout-weights\n"
-        "pspairs/MoHex Playout Global Weights/mohex-playout-global-weights\n"  
+        "pspairs/MoHex Playout Global Weights/mohex-playout-global-weights\n"
         "pspairs/MoHex Playout Local Weights/mohex-playout-local-weights\n"
         "string/MoHex Search Statistics/mohex-search-statistics\n"
         "string/MoHex Pattern Match On Cell/mohex-pattern-match-on-cell %p\n"
@@ -271,7 +271,7 @@ void MoHexEngine::MoHexPolicyParam(HtpCommand& cmd)
 void MoHexEngine::MoHexParam(HtpCommand& cmd)
 {
     MoHexSearch& search = m_player.Search();
-    if (cmd.NuArg() == 0) 
+    if (cmd.NuArg() == 0)
     {
         cmd << '\n'
             << "[bool] backup_ice_info "
@@ -279,19 +279,21 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
             << "[bool] extend_unstable_search "
             << search.ExtendUnstableSearch() << '\n'
 #if HAVE_GCC_ATOMIC_BUILTINS
-            << "[bool] lock_free " 
+            << "[bool] lock_free "
             << search.LockFree() << '\n'
 #endif
             << "[bool] lazy_delete "
             << search.LazyDelete() << '\n'
-            << "[bool] perform_pre_search " 
+            << "[bool] perform_pre_search "
             << m_player.PerformPreSearch() << '\n'
             << "[bool] prior_pruning "
             << search.PriorPruning() << '\n'
             << "[bool] ponder "
             << m_player.Ponder() << '\n'
-            << "[bool] reuse_subtree " 
+            << "[bool] reuse_subtree "
             << m_player.ReuseSubtree() << '\n'
+            << "[bool] use_neural_net "
+            << m_player.UseNeuralNet() << '\n'
             << "[bool] search_singleton "
             << m_player.SearchSingleton() << '\n'
             << "[bool] use_livegfx "
@@ -380,6 +382,8 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
             search.SetRandomizeRaveFrequency(cmd.ArgMin<int>(1, 0));
         else if (name == "reuse_subtree")
            m_player.SetReuseSubtree(cmd.Arg<bool>(1));
+        else if (name == "use_neural_net")
+           m_player.SetUseNeuralNet(cmd.Arg<bool>(1));
         else if (name == "bias_term")
             search.SetBiasTermConstant(cmd.Arg<float>(1));
         else if (name == "uct_bias_constant")
@@ -396,7 +400,7 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
         else if (name == "max_games")
             m_player.SetMaxGames(cmd.ArgMin<int>(1, 1));
         else if (name == "max_memory")
-            search.SetMaxNodes(cmd.ArgMin<std::size_t>(1, 1) 
+            search.SetMaxNodes(cmd.ArgMin<std::size_t>(1, 1)
                                / sizeof(SgUctNode) / 2);
         else if (name == "max_time")
             m_player.SetMaxTime(cmd.Arg<float>(1));
@@ -438,13 +442,13 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
         else
             throw HtpFailure() << "Unknown parameter: " << name;
     }
-    else 
+    else
         throw HtpFailure("Expected 0 or 2 arguments");
 }
 
 /** Saves the search tree from the previous search to the specified
     file.  The optional second parameter sets the max depth to
-    output. If not given, entire tree is saved.    
+    output. If not given, entire tree is saved.
 */
 void MoHexEngine::SaveTree(HtpCommand& cmd)
 {
@@ -478,7 +482,7 @@ void MoHexEngine::Values(HtpCommand& cmd)
             cmd << "L@" << count;
         else if (count == 0)
             cmd << "0";
-        else 
+        else
         {
             SgUctValue mean = search.InverseEval(child.Mean());
             cmd << '.' << MoHexUtil::FixedValue(mean, 3)
@@ -597,7 +601,7 @@ void MoHexEngine::DoPlayouts(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
@@ -623,7 +627,7 @@ void MoHexEngine::CellStats(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
@@ -660,13 +664,13 @@ void MoHexEngine::CellStats(HtpCommand& cmd)
         float v = 0.0f;
         if (played[*p] > 0)
             v = (float)won[*p] / (float)played[*p];
-#if 0        
+#if 0
         // zoom into [0.2, 0.8]
         v = 0.5f + (v - 0.5f) / (0.8f - 0.2f);
         if (v < 0.0f) v = 0.0f;
         if (v > 1.0f) v = 1.0f;
 #endif
-        cmd << ' ' << static_cast<HexPoint>(*p) 
+        cmd << ' ' << static_cast<HexPoint>(*p)
             << ' ' << std::fixed << std::setprecision(3) << v;
     }
     cmd << " TEXT pct=" << wins * 100.0 / NUM_PLAYOUTS;
@@ -677,12 +681,12 @@ void MoHexEngine::PlayoutMove(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     bool skipRaveUpdate;
@@ -700,14 +704,14 @@ void MoHexEngine::PlayoutPlayPercent(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     if (m_game.Board().GetEmpty().none())
         return;
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     bool skipRaveUpdate;
@@ -734,14 +738,14 @@ void MoHexEngine::PlayoutWeights(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     if (m_game.Board().GetEmpty().none())
         return;
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     bool skipRaveUpdate;
@@ -759,14 +763,14 @@ void MoHexEngine::PlayoutGlobalWeights(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     if (m_game.Board().GetEmpty().none())
         return;
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     bool skipRaveUpdate;
@@ -784,14 +788,14 @@ void MoHexEngine::PlayoutLocalWeights(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     if (m_game.Board().GetEmpty().none())
         return;
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     bool skipRaveUpdate;
@@ -809,9 +813,9 @@ void MoHexEngine::SearchStatistics(HtpCommand& cmd)
     const MoHexSearch& search = m_player.Search();
     cmd << m_player.SearchStatistics() << '\n';
     cmd << search.SharedData().treeStatistics.ToString() << '\n';
-    if (search.ProgressiveBiasConstant() > 0.0f) 
+    if (search.ProgressiveBiasConstant() > 0.0f)
     {
-        cmd << "GlobalPatterns:\n" 
+        cmd << "GlobalPatterns:\n"
             << search.GlobalPatterns().GetStatistics().ToString()
             << "LocalPatterns:\n"
             << search.LocalPatterns().GetStatistics().ToString() << '\n';
@@ -828,16 +832,16 @@ void MoHexEngine::PatternMatchOnCell(HtpCommand& cmd)
     MoHexSearch& search = m_player.Search();
     if (!search.ThreadsCreated())
         search.CreateThreads();
-    MoHexThreadState* thread 
+    MoHexThreadState* thread
         = dynamic_cast<MoHexThreadState*>(&search.ThreadState(0));
     if (!thread)
         throw HtpFailure() << "Thread not a MoHexThreadState!";
     HexState state(m_game.Board(), m_game.Board().WhoseTurn());
-    HexPoint lastMovePlayed 
+    HexPoint lastMovePlayed
         = MoveSequenceUtil::LastMoveFromHistory(m_game.History());
     thread->StartPlayout(state, lastMovePlayed);
     const MoHexBoard& mobrd = thread->GetMoHexBoard();
-    
+
     const MoHexPatterns::Data* data;
     cmd << "Prior Patterns:\n"
         << "---------------\n";
@@ -861,7 +865,7 @@ void MoHexEngine::PatternMatchOnCell(HtpCommand& cmd)
             << "type=" << data->type << " killer=" << data->killer
             << " gamma=" << data->gamma << '\n';
     }
-    
+
     cmd << "\nPlayout Patterns:\n"
         << "-----------------\n";
     search.PlayoutGlobalPatterns().Match(mobrd, 12, p, state.ToPlay(), &data);
@@ -899,11 +903,11 @@ void MoHexEngine::FindTopMoves(HtpCommand& cmd)
     bitset_t consider = EndgameUtil::MovesToConsider(brd, color);
     std::vector<HexPoint> moves;
     std::vector<double> scores;
-    m_player.FindTopMoves(num, state, m_game, brd, consider, 
+    m_player.FindTopMoves(num, state, m_game, brd, consider,
                           m_player.MaxTime(), moves, scores);
     for (std::size_t i = 0; i < moves.size(); ++i)
-        cmd << ' ' << static_cast<HexPoint>(moves[i]) 
-            << ' ' << (i + 1) 
+        cmd << ' ' << static_cast<HexPoint>(moves[i])
+            << ' ' << (i + 1)
             << '@' << std::fixed << std::setprecision(3) << scores[i];
 }
 
@@ -920,7 +924,7 @@ void MoHexEngine::SelfPlay(HtpCommand& cmd)
         game.NewGame();
         state.Position() = game.Board();
         state.SetToPlay(BLACK);
-        
+
         HexPoint firstMove = BoardUtil::RandomEmptyCell(state.Position());
         game.PlayMove(state.ToPlay(), firstMove);
         state.PlayMove(firstMove);
@@ -936,7 +940,7 @@ void MoHexEngine::SelfPlay(HtpCommand& cmd)
             game.PlayMove(state.ToPlay(), move);
             state.PlayMove(move);
         }
-    }    
+    }
 }
 
 //----------------------------------------------------------------------------
@@ -970,7 +974,7 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
     std::ifstream f(infile.c_str());
     std::ofstream of(outfile.c_str());
     std::string line;
-    if (!std::getline(f, line)) 
+    if (!std::getline(f, line))
         throw HtpFailure("Empty file");
     of << line << '\n';
 
@@ -980,9 +984,9 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
     StoneBoard brd(11);
     const ConstBoard& cbrd = brd.Const();
     PatternState pastate(brd);
-    while (f.good()) 
+    while (f.good())
     {
-        if (!std::getline(f, line)) 
+        if (!std::getline(f, line))
             break;
         if (line.size() < 5)
             continue;
@@ -1009,23 +1013,23 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
                 brd.SetColor(WHITE, p);
         }
         pastate.Update();
-        
+
         type = 0;
         killer = 0;
         PatternHits hits;
-        pastate.MatchOnCell(hoppfill, HEX_CELL_F6, 
+        pastate.MatchOnCell(hoppfill, HEX_CELL_F6,
                             PatternState::STOP_AT_FIRST_HIT, hits);
         if (hits.size() > 0)
             type = 1;
-        else 
+        else
         {
             pastate.MatchOnCell(hvul, HEX_CELL_F6,
                                 PatternState::STOP_AT_FIRST_HIT, hits);
             if (hits.size() > 0)
                 type = 2;
-            else 
+            else
             {
-                pastate.MatchOnCell(hdom, HEX_CELL_F6, 
+                pastate.MatchOnCell(hdom, HEX_CELL_F6,
                                     PatternState::STOP_AT_FIRST_HIT, hits);
                 if (hits.size() > 0)
                 {
@@ -1039,12 +1043,12 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
                 }
             }
         }
-        if (type > 0) 
+        if (type > 0)
         {
             LogInfo() << brd.Write() << '\n'
-                      << "gamma=" << gamma 
-                      << " pat=" << hits[0].GetPattern()->GetName() 
-                      << " type=" << type 
+                      << "gamma=" << gamma
+                      << " pat=" << hits[0].GetPattern()->GetName()
+                      << " type=" << type
                       << " killer=" << killer << '\n';
             numPrunable++;
 
@@ -1054,11 +1058,11 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
             if (fgamma > largestPrunedGamma)
                 largestPrunedGamma = fgamma;
         }
-        of << std::setw(16) << std::fixed << std::setprecision(6) << gamma 
-           << std::setw(11) << w 
+        of << std::setw(16) << std::fixed << std::setprecision(6) << gamma
+           << std::setw(11) << w
            << std::setw(11) << a
            << std::setw(19) << pattern
-           << std::setw(11) << type 
+           << std::setw(11) << type
            << std::setw(11) << killer
            << '\n';
     }
@@ -1087,7 +1091,7 @@ void MoHexEngine::Ponder()
         LogWarning() << "Pondering requires reuse_subtree.\n";
         return;
     }
-    // Call genmove() after 0.2 seconds delay to avoid calls 
+    // Call genmove() after 0.2 seconds delay to avoid calls
     // in very short intervals between received commands
     boost::xtime time;
     #if BOOST_VERSION >= 105000

@@ -153,50 +153,52 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
     }
 
     // neural network integration
-    StoneBoard &board = data.rootState.Position();
-    // 13x13 only for now
-    BenzeneAssert(board.Width() == 13 && board.Height() == 13);
-    // If we are not resuing an old subtree, then create a new one and populate
-    // it with the output of the neural network
-    if (!initTree) {
-        timer.Start();
+    if (m_use_neural_net) {
+        StoneBoard &board = data.rootState.Position();
+        // 13x13 only for now
+        BenzeneAssert(board.Width() == 13 && board.Height() == 13);
+        // If we are not resuing an old subtree, then create a new one and populate
+        // it with the output of the neural network
+        if (!initTree) {
+            timer.Start();
 
-        // add all moves being considered to the tree
-        initTree = &m_search.GetTempTree();
-        std::vector<SgUctMoveInfo> moves;
-        for (BitsetIterator it(data.rootConsider); it; ++it)
-            moves.push_back(SgUctMoveInfo(static_cast<SgMove>(*it)));
-        initTree->CreateChildren(0, initTree->Root(), moves);
+            // add all moves being considered to the tree
+            initTree = &m_search.GetTempTree();
+            std::vector<SgUctMoveInfo> moves;
+            for (BitsetIterator it(data.rootConsider); it; ++it)
+                moves.push_back(SgUctMoveInfo(static_cast<SgMove>(*it)));
+            initTree->CreateChildren(0, initTree->Root(), moves);
 
-        // setup network input
-        const int boardN = 13;
-        const int boardSize = boardN * boardN;
-        bool netState[2 * boardSize];
-        double scores[boardSize];
-        for (int i = 0; i < boardSize * 2; i++) {
-            int x = i % boardN;
-            int y = i / boardN % boardN;
-            HexPoint point = HexPointUtil::coordsToPoint(x, y);
-            HexColor color = static_cast<HexColor>(1 - i / boardSize);
-            netState[i] = board.IsColor(point, color);
+            // setup network input
+            const int boardN = 13;
+            const int boardSize = boardN * boardN;
+            bool netState[2 * boardSize];
+            double scores[boardSize];
+            for (int i = 0; i < boardSize * 2; i++) {
+                int x = i % boardN;
+                int y = i / boardN % boardN;
+                HexPoint point = HexPointUtil::coordsToPoint(x, y);
+                HexColor color = static_cast<HexColor>(1 - i / boardSize);
+                netState[i] = board.IsColor(point, color);
+            }
+
+            m_eval.evaluate(netState, 1 - state.ToPlay(), scores);
+
+            // init RAVE values of these with scores from neural net
+            // TODO is this optimal?
+            SgUctChildIterator it(*initTree, initTree->Root());
+            for (; it; ++it) {
+                const_cast<SgUctNode &>(*it).InitializeRaveValue(
+                    scores[(*it).Move()], 1);
+            }
+
+            timer.Stop();
+            LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
+
+            maxTime -= timer.GetTime();
+            maxTime = std::max(0.5, maxTime); // I put this to 0.5 so testing
+                                              // with 1sec is fair
         }
-
-        m_eval.evaluate(netState, 1 - state.ToPlay(), scores);
-
-        // init RAVE values of these with scores from neural net
-        // TODO is this optimal?
-        SgUctChildIterator it(*initTree, initTree->Root());
-        for (; it; ++it) {
-            const_cast<SgUctNode &>(*it).InitializeRaveValue(
-                scores[(*it).Move()], 1);
-        }
-
-        timer.Stop();
-        LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
-
-        maxTime -= timer.GetTime();
-        maxTime = std::max(0.5, maxTime); // I put this to 0.5 so testing
-                                          // with 1sec is fair
     }
 
     m_search.SetSharedData(data);

@@ -86,6 +86,12 @@ public:
     /** See ReuseSubtree() */
     void SetReuseSubtree(bool reuse);
 
+    /** Use a neural net to bias the search */
+    bool UseNeuralNet() const;
+
+    /** See UseNeuralNet() */
+    void SetUseNeuralNet(bool flag);
+
     /** Searches while waiting for a command. */
     bool Ponder() const;
 
@@ -128,6 +134,9 @@ protected:
 
     /** See ReuseSubtree() */
     bool m_reuse_subtree;
+
+    /** See UseNeuralNet() */
+    bool m_use_neural_net;
 
     /** See Ponder() */
     bool m_ponder;
@@ -234,6 +243,16 @@ inline bool MoHexPlayer::ReuseSubtree() const
 inline void MoHexPlayer::SetReuseSubtree(bool reuse)
 {
     m_reuse_subtree = reuse;
+}
+
+inline bool MoHexPlayer::UseNeuralNet() const
+{
+    return m_use_neural_net;
+}
+
+inline void MoHexPlayer::SetUseNeuralNet(bool flag)
+{
+    m_use_neural_net = flag;
 }
 
 inline bool MoHexPlayer::Ponder() const
