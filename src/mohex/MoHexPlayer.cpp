@@ -156,41 +156,44 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
     if (m_use_neural_net) {
         StoneBoard &board = data.rootState.Position();
         // 13x13 only for now
-        BenzeneAssert(board.Width() == 13 && board.Height() == 13);
+        const int boardN = 13;
+        BenzeneAssert(board.Width() == boardN && board.Height() == boardN);
         // If we are not resuing an old subtree, then create a new one and populate
         // it with the output of the neural network
         if (!initTree) {
             timer.Start();
 
+            const SgUctValue CNN_STRENGTH = 100000;
+
+            double scores[boardN*boardN];
+            m_network.Evaluate(board, state.ToPlay(), scores);
+
+            SgUctValue max_score = 0;
+            for (BitsetIterator it(data.rootConsider); it; ++it) {
+                double score = scores[*it];
+                max_score = std::max(max_score, score);
+            }
+
             // add all moves being considered to the tree
             initTree = &m_search.GetTempTree();
             std::vector<SgUctMoveInfo> moves;
-            for (BitsetIterator it(data.rootConsider); it; ++it)
-                moves.push_back(SgUctMoveInfo(static_cast<SgMove>(*it)));
+            for (BitsetIterator it(data.rootConsider); it; ++it) {
+                SgUctMoveInfo moveInfo = SgUctMoveInfo(static_cast<SgMove>(*it));
+                double score = scores[*it];
+                if (score == max_score) {
+                    LogInfo() << "neural net claims best move is " << *it << "\n";
+                }
+                double value1 = score / max_score;
+                double value2 = value1;
+
+                moveInfo.Add(value2, value1 * CNN_STRENGTH);
+                moves.push_back(moveInfo);
+            }
             initTree->CreateChildren(0, initTree->Root(), moves);
 
-            // setup network input
-            const int boardN = 13;
-            const int boardSize = boardN * boardN;
-            bool netState[2 * boardSize];
-            double scores[boardSize];
-            for (int i = 0; i < boardSize * 2; i++) {
-                int x = i % boardN;
-                int y = i / boardN % boardN;
-                HexPoint point = HexPointUtil::coordsToPoint(x, y);
-                HexColor color = static_cast<HexColor>(1 - i / boardSize);
-                netState[i] = board.IsColor(point, color);
-            }
+            initTree->CheckConsistency();
 
-            m_eval.evaluate(netState, 1 - state.ToPlay(), scores);
-
-            // init RAVE values of these with scores from neural net
-            // TODO is this optimal?
-            SgUctChildIterator it(*initTree, initTree->Root());
-            for (; it; ++it) {
-                const_cast<SgUctNode &>(*it).InitializeRaveValue(
-                    scores[(*it).Move()], 1);
-            }
+            LogInfo() << "max_score: " << max_score << "\n";
 
             timer.Stop();
             LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";

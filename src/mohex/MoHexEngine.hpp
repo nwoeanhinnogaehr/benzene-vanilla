@@ -20,7 +20,7 @@ class MoHexEngine : public CommonHtpEngine
 public:
 
     MoHexEngine(int boardsize, MoHexPlayer& player);
-    
+
     ~MoHexEngine();
 
     /** @name Command Callbacks */
@@ -48,6 +48,7 @@ public:
     void FindTopMoves(HtpCommand& cmd);
     void SelfPlay(HtpCommand& cmd);
     void MarkPrunablePatterns(HtpCommand& cmd);
+    void EvaluateNetwork(HtpCommand& cmd);
 
     // @} // @name
 
@@ -66,7 +67,7 @@ private:
     MoHexPlayer& m_player;
 
     boost::scoped_ptr<Book> m_book;
-    
+
     BookCheck m_bookCheck;
 
     BookBuilderCommands<MoHexPlayer> m_bookCommands;

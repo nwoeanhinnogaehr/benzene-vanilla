@@ -121,6 +121,7 @@ MoHexEngine::MoHexEngine(int boardsize, MoHexPlayer& player)
     RegisterCmd("mohex-find-top-moves", &MoHexEngine::FindTopMoves);
     RegisterCmd("mohex-self-play", &MoHexEngine::SelfPlay);
     RegisterCmd("mohex-mark-prunable", &MoHexEngine::MarkPrunablePatterns);
+    RegisterCmd("mohex-evaluate-network", &MoHexEngine::EvaluateNetwork);
 }
 
 MoHexEngine::~MoHexEngine()
@@ -244,7 +245,8 @@ void MoHexEngine::CmdAnalyzeCommands(HtpCommand& cmd)
         "string/MoHex Search Statistics/mohex-search-statistics\n"
         "string/MoHex Pattern Match On Cell/mohex-pattern-match-on-cell %p\n"
         "none/MoHex Self Play/mohex-self-play\n"
-        "pspairs/MoHex Top Moves/mohex-find-top-moves %c\n";
+        "pspairs/MoHex Top Moves/mohex-find-top-moves %c\n"
+        "gfx/MoHex Evaluate Network/mohex-evaluate-network\n";
 }
 
 void MoHexEngine::MoHexPolicyParam(HtpCommand& cmd)
@@ -1070,6 +1072,27 @@ void MoHexEngine::MarkPrunablePatterns(HtpCommand& cmd)
     f.close();
     LogInfo() << "numPrunable=" << numPrunable << '\n';
     LogInfo() << "largestPrunedGamma=" << largestPrunedGamma << '\n';
+}
+
+void MoHexEngine::EvaluateNetwork(HtpCommand& cmd)
+{
+    MoHexNetwork &network = m_player.Network();
+    StoneBoard &board = m_game.Board();
+    HexColor toPlay = board.WhoseTurn();
+    const int boardSize = 13*13;
+    double scores[boardSize];
+    network.Evaluate(board, toPlay, scores);
+    double maxValue = 0;
+    double minValue = 1;
+    for (int i = 0; i < boardSize; i++) {
+        maxValue = std::max(maxValue, scores[i]);
+        minValue = std::min(minValue, scores[i]);
+    }
+    cmd << "INFLUENCE ";
+    for (int i = 0; i < boardSize; i++) {
+        cmd << ' ' << static_cast<HexPoint>(i+7)
+            << ' ' << std::fixed << std::setprecision(3) << (scores[i] - minValue) / (maxValue - minValue);
+    }
 }
 
 //----------------------------------------------------------------------------

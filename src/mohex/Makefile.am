@@ -11,7 +11,8 @@ MoHexPriorKnowledge.cpp \
 MoHexProgram.cpp \
 MoHexSearch.cpp \
 MoHexThreadState.cpp \
-MoHexUtil.cpp
+MoHexUtil.cpp \
+MoHexNetwork.cpp
 
 noinst_HEADERS = \
 MoHexBoard.hpp \
@@ -23,7 +24,8 @@ MoHexPriorKnowledge.hpp \
 MoHexProgram.hpp \
 MoHexSearch.hpp \
 MoHexThreadState.hpp \
-MoHexUtil.hpp
+MoHexUtil.hpp \
+MoHexNetwork.hpp
 
 
 mohex_LDADD = \

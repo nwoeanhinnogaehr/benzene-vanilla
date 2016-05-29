@@ -8,7 +8,7 @@
 #include "BenzenePlayer.hpp"
 #include "MoHexSearch.hpp"
 #include "MoHexPlayoutPolicy.hpp"
-#include "networkEvaluator.h"
+#include "MoHexNetwork.hpp"
 
 _BEGIN_BENZENE_NAMESPACE_
 
@@ -27,6 +27,9 @@ public:
 
     /** Returns the search. */
     MoHexSearch& Search();
+
+    /** Returns the neural network. */
+    MoHexNetwork& Network();
 
     /** Returns the search. */
     const MoHexSearch& Search() const;
@@ -119,7 +122,7 @@ protected:
 
     std::string m_search_statistics;
 
-    networkEvaluator m_eval;
+    MoHexNetwork m_network;
 
     bool m_backup_ice_info;
 
@@ -178,6 +181,11 @@ inline MoHexSearch& MoHexPlayer::Search()
 inline const MoHexSearch& MoHexPlayer::Search() const
 {
     return m_search;
+}
+
+inline MoHexNetwork& MoHexPlayer::Network()
+{
+    return m_network;
 }
 
 inline MoHexSharedPolicy& MoHexPlayer::SharedPolicy()
