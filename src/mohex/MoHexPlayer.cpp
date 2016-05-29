@@ -163,7 +163,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         if (!initTree) {
             timer.Start();
 
-            const SgUctValue CNN_STRENGTH = 100000;
+            const SgUctValue CNN_STRENGTH = 100;
 
             double scores[boardN*boardN];
             m_network.Evaluate(board, state.ToPlay(), scores);
@@ -185,7 +185,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                 if (score == maxScore) {
                     LogInfo() << "neural net claims best move is " << *it << "\n";
                 }
-                double value1 = (score - minScore) / (maxScore - minScore);
+                double value1 = score / maxScore;
                 double value2 = value1;
 
                 moveInfo.Add(value2, value1 * CNN_STRENGTH);
@@ -201,8 +201,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
 
             maxTime -= timer.GetTime();
-            maxTime = std::max(0.5, maxTime); // I put this to 0.5 so testing
-                                              // with 1sec is fair
+            maxTime = std::max(1.0, maxTime);
         }
     }
 
