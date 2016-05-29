@@ -168,10 +168,12 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             double scores[boardN*boardN];
             m_network.Evaluate(board, state.ToPlay(), scores);
 
-            SgUctValue max_score = 0;
+            double maxScore = 0;
+            double minScore = 1;
             for (BitsetIterator it(data.rootConsider); it; ++it) {
-                double score = scores[*it];
-                max_score = std::max(max_score, score);
+                double score = scores[*it - FIRST_CELL];
+                maxScore = std::max(maxScore, score);
+                minScore = std::min(minScore, score);
             }
 
             // add all moves being considered to the tree
@@ -179,11 +181,11 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             std::vector<SgUctMoveInfo> moves;
             for (BitsetIterator it(data.rootConsider); it; ++it) {
                 SgUctMoveInfo moveInfo = SgUctMoveInfo(static_cast<SgMove>(*it));
-                double score = scores[*it];
-                if (score == max_score) {
+                double score = scores[*it - FIRST_CELL];
+                if (score == maxScore) {
                     LogInfo() << "neural net claims best move is " << *it << "\n";
                 }
-                double value1 = score / max_score;
+                double value1 = (score - minScore) / (maxScore - minScore);
                 double value2 = value1;
 
                 moveInfo.Add(value2, value1 * CNN_STRENGTH);
@@ -193,7 +195,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
 
             initTree->CheckConsistency();
 
-            LogInfo() << "max_score: " << max_score << "\n";
+            LogInfo() << "maxScore: " << maxScore << "\n";
 
             timer.Stop();
             LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
