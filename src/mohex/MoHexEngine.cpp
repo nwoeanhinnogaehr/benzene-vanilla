@@ -353,7 +353,9 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
             << "[string] time_control_override "
             << m_timeControlOverride << '\n'
             << "[string] uct_bias_constant "
-            << search.UctBiasConstant() << '\n';
+            << search.UctBiasConstant() << '\n'
+            << "[string] cnn_strength "
+            << m_player.CNNStrength() << '\n';
     }
     else if (cmd.NuArg() == 2)
     {
@@ -386,6 +388,8 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
            m_player.SetReuseSubtree(cmd.Arg<bool>(1));
         else if (name == "use_neural_net")
            m_player.SetUseNeuralNet(cmd.Arg<bool>(1));
+        else if (name == "cnn_strength")
+           m_player.SetCNNStrength(cmd.Arg<float>(1));
         else if (name == "bias_term")
             search.SetBiasTermConstant(cmd.Arg<float>(1));
         else if (name == "uct_bias_constant")

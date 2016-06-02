@@ -95,6 +95,12 @@ public:
     /** See UseNeuralNet() */
     void SetUseNeuralNet(bool flag);
 
+    /** Neural net bias strength */
+    float CNNStrength() const;
+
+    /** See CNNStrength() */
+    void SetCNNStrength(float val);
+
     /** Searches while waiting for a command. */
     bool Ponder() const;
 
@@ -140,6 +146,9 @@ protected:
 
     /** See UseNeuralNet() */
     bool m_use_neural_net;
+
+    /** See CNNStrength() */
+    float m_cnn_strength;
 
     /** See Ponder() */
     bool m_ponder;
@@ -261,6 +270,16 @@ inline bool MoHexPlayer::UseNeuralNet() const
 inline void MoHexPlayer::SetUseNeuralNet(bool flag)
 {
     m_use_neural_net = flag;
+}
+
+inline float MoHexPlayer::CNNStrength() const
+{
+    return m_cnn_strength;
+}
+
+inline void MoHexPlayer::SetCNNStrength(float val)
+{
+    m_cnn_strength = val;
 }
 
 inline bool MoHexPlayer::Ponder() const

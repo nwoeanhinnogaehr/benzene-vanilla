@@ -52,7 +52,8 @@ MoHexPlayer::MoHexPlayer()
       m_reuse_subtree(true),
       m_ponder(false),
       m_performPreSearch(true),
-      m_useRootData(true)
+      m_useRootData(true),
+      m_cnn_strength(100)
 {
 }
 
@@ -75,6 +76,8 @@ void MoHexPlayer::CopySettingsFrom(const MoHexPlayer& other)
     SetUseTimeManagement(other.UseTimeManagement());
     SetReuseSubtree(other.ReuseSubtree());
     SetUseRootData(other.UseRootData());
+    SetUseNeuralNet(other.UseNeuralNet());
+    SetCNNStrength(other.CNNStrength());
     Search().SetMaxNodes(other.Search().MaxNodes());
     Search().SetNumberThreads(other.Search().NumberThreads());
     Search().SetFirstPlayUrgency(other.Search().FirstPlayUrgency());
@@ -163,8 +166,6 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         if (!initTree) {
             timer.Start();
 
-            const SgUctValue CNN_STRENGTH = 100;
-
             double scores[boardN*boardN];
             m_network.Evaluate(board, state.ToPlay(), scores);
 
@@ -185,10 +186,10 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                 if (score == maxScore) {
                     LogInfo() << "neural net claims best move is " << *it << "\n";
                 }
-                double value1 = score / maxScore;
+                double value1 = score;
                 double value2 = value1;
 
-                moveInfo.Add(value2, value1 * CNN_STRENGTH);
+                moveInfo.Add(value2, value1 * m_cnn_strength);
                 moves.push_back(moveInfo);
             }
             initTree->CreateChildren(0, initTree->Root(), moves);
