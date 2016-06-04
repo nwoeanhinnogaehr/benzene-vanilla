@@ -190,13 +190,13 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
 
             moveInfo.Add(value2, value1 * m_cnn_strength);
             moves.push_back(moveInfo);
-            if (!initTree)
-                tmpTree->CreateChildren(0, tmpTree->Root(), moves);
         }
-        if (!initTree)
+        if (!initTree) {
             initTree = tmpTree;
-        else
+            initTree->CreateChildren(0, initTree->Root(), moves);
+        } else {
             initTree->MergeChildren(0, initTree->Root(), moves, false);
+        }
 
         LogInfo() << "maxScore: " << maxScore << "\n";
 
