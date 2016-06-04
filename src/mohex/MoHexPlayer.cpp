@@ -161,8 +161,6 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         // 13x13 only for now
         const int boardN = 13;
         BenzeneAssert(board.Width() == boardN && board.Height() == boardN);
-        // If we are not resuing an old subtree, then create a new one and populate
-        // it with the output of the neural network
         timer.Start();
 
         double scores[boardN*boardN];
@@ -191,10 +189,10 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             moveInfo.Add(value2, value1 * m_cnn_strength);
             moves.push_back(moveInfo);
         }
-        if (!initTree) {
+        if (!initTree) { // not reusing subtree, create new nodes
             initTree = tmpTree;
             initTree->CreateChildren(0, initTree->Root(), moves);
-        } else {
+        } else { // reusing subtree, merge nodes
             initTree->MergeChildren(0, initTree->Root(), moves, false);
         }
 
