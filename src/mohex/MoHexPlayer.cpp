@@ -163,47 +163,48 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         BenzeneAssert(board.Width() == boardN && board.Height() == boardN);
         // If we are not resuing an old subtree, then create a new one and populate
         // it with the output of the neural network
-        if (!initTree) {
-            timer.Start();
+        timer.Start();
 
-            double scores[boardN*boardN];
-            m_network.Evaluate(board, state.ToPlay(), scores);
+        double scores[boardN*boardN];
+        m_network.Evaluate(board, state.ToPlay(), scores);
 
-            double maxScore = 0;
-            double minScore = 1;
-            for (BitsetIterator it(data.rootConsider); it; ++it) {
-                double score = scores[*it - FIRST_CELL];
-                maxScore = std::max(maxScore, score);
-                minScore = std::min(minScore, score);
-            }
-
-            // add all moves being considered to the tree
-            initTree = &m_search.GetTempTree();
-            std::vector<SgUctMoveInfo> moves;
-            for (BitsetIterator it(data.rootConsider); it; ++it) {
-                SgUctMoveInfo moveInfo = SgUctMoveInfo(static_cast<SgMove>(*it));
-                double score = scores[*it - FIRST_CELL];
-                if (score == maxScore) {
-                    LogInfo() << "neural net claims best move is " << *it << "\n";
-                }
-                double value1 = score;
-                double value2 = value1;
-
-                moveInfo.Add(value2, value1 * m_cnn_strength);
-                moves.push_back(moveInfo);
-            }
-            initTree->CreateChildren(0, initTree->Root(), moves);
-
-            initTree->CheckConsistency();
-
-            LogInfo() << "maxScore: " << maxScore << "\n";
-
-            timer.Stop();
-            LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
-
-            maxTime -= timer.GetTime();
-            maxTime = std::max(1.0, maxTime);
+        double maxScore = 0;
+        double minScore = 1;
+        for (BitsetIterator it(data.rootConsider); it; ++it) {
+            double score = scores[*it - FIRST_CELL];
+            maxScore = std::max(maxScore, score);
+            minScore = std::min(minScore, score);
         }
+
+        // add all moves being considered to the tree
+        SgUctTree* tmpTree = &m_search.GetTempTree();
+        std::vector<SgUctMoveInfo> moves;
+        for (BitsetIterator it(data.rootConsider); it; ++it) {
+            SgUctMoveInfo moveInfo = SgUctMoveInfo(static_cast<SgMove>(*it));
+            double score = scores[*it - FIRST_CELL];
+            if (score == maxScore) {
+                LogInfo() << "neural net claims best move is " << *it << "\n";
+            }
+            double value1 = score;
+            double value2 = value1;
+
+            moveInfo.Add(value2, value1 * m_cnn_strength);
+            moves.push_back(moveInfo);
+            if (!initTree)
+                tmpTree->CreateChildren(0, tmpTree->Root(), moves);
+        }
+        if (!initTree)
+            initTree = tmpTree;
+        else
+            initTree->MergeChildren(0, initTree->Root(), moves, false);
+
+        LogInfo() << "maxScore: " << maxScore << "\n";
+
+        timer.Stop();
+        LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";
+
+        maxTime -= timer.GetTime();
+        maxTime = std::max(1.0, maxTime);
     }
 
     m_search.SetSharedData(data);
