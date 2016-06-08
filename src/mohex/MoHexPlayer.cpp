@@ -218,7 +218,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             initTree->MergeChildren(0, *node, moves, false);
 
             if (stateDiff.size() < 1) {
-                stateDiff.push_back(bestMove - FIRST_CELL + (1 - player) * boardSize);
+                stateDiff.push_back(bestMove - FIRST_CELL + player * boardSize);
                 evalMoves.push_back(stateDiff);
             }
         }
