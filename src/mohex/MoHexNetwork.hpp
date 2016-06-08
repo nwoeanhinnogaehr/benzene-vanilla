@@ -18,7 +18,7 @@ class MoHexNetwork
     public:
         MoHexNetwork();
 
-        void Evaluate(StoneBoard &board, HexColor toPlay, double *scores);
+        void Evaluate(StoneBoard &board, HexColor toPlay, double *scores, std::vector<int> diff);
 
     protected:
         networkEvaluator m_eval;

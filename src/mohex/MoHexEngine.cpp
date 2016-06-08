@@ -1085,7 +1085,7 @@ void MoHexEngine::EvaluateNetwork(HtpCommand& cmd)
     HexColor toPlay = board.WhoseTurn();
     const int boardSize = 13*13;
     double scores[boardSize];
-    network.Evaluate(board, toPlay, scores);
+    network.Evaluate(board, toPlay, scores, std::vector<int>());
     double maxValue = 0;
     double minValue = 1;
     for (int i = 0; i < boardSize; i++) {

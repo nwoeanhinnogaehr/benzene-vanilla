@@ -160,43 +160,69 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
         StoneBoard &board = data.rootState.Position();
         // 13x13 only for now
         const int boardN = 13;
+        const int boardSize = boardN * boardN;
         BenzeneAssert(board.Width() == boardN && board.Height() == boardN);
         timer.Start();
 
-        double scores[boardN*boardN];
-        m_network.Evaluate(board, state.ToPlay(), scores);
+        std::vector<std::vector<int> > evalMoves;
+        evalMoves.push_back(std::vector<int>());
 
-        double maxScore = 0;
-        double minScore = 1;
-        for (BitsetIterator it(data.rootConsider); it; ++it) {
-            double score = scores[*it - FIRST_CELL];
-            maxScore = std::max(maxScore, score);
-            minScore = std::min(minScore, score);
-        }
-
-        // add all moves being considered to the tree
-        SgUctTree* tmpTree = &m_search.GetTempTree();
-        std::vector<SgUctMoveInfo> moves;
-        for (BitsetIterator it(data.rootConsider); it; ++it) {
-            SgUctMoveInfo moveInfo = SgUctMoveInfo(static_cast<SgMove>(*it));
-            double score = scores[*it - FIRST_CELL];
-            if (score == maxScore) {
-                LogInfo() << "neural net claims best move is " << *it << "\n";
-            }
-            double value1 = score;
-            double value2 = value1;
-
-            moveInfo.Add(value2, value1 * m_cnn_strength);
-            moves.push_back(moveInfo);
-        }
         if (!initTree) { // not reusing subtree, create new nodes
-            initTree = tmpTree;
-            initTree->CreateChildren(0, initTree->Root(), moves);
-        } else { // reusing subtree, merge nodes
-            initTree->MergeChildren(0, initTree->Root(), moves, false);
+            initTree = &m_search.GetTempTree();
+            initTree->Clear();
         }
 
-        LogInfo() << "maxScore: " << maxScore << "\n";
+        while (!evalMoves.empty()) {
+            std::vector<int> stateDiff = evalMoves.back();
+            evalMoves.pop_back();
+
+            HexColor player = static_cast<HexColor>(state.ToPlay() - stateDiff.size() % 2);
+
+            double scores[boardN*boardN];
+            m_network.Evaluate(board, player, scores, stateDiff);
+
+            // create vector of move info to insert into the tree
+            std::vector<SgUctMoveInfo> moves;
+            SgUctValue maxScore = 0;
+            SgMove bestMove = -1;
+            for (BitsetIterator it(data.rootConsider); it; ++it) {
+                SgUctMoveInfo moveInfo = SgUctMoveInfo(*it);
+                double score = scores[*it - FIRST_CELL];
+                if (score >= maxScore) {
+                    maxScore = score;
+                    bestMove = *it;
+                }
+                moveInfo.Add(score, score * m_cnn_strength);
+                moves.push_back(moveInfo);
+            }
+
+            // ensure the tree has a path to the nedes we are adding
+            const SgUctNode* node = &initTree->Root();
+            for (size_t i = 0; i < stateDiff.size(); i++) {
+                // attempt to find child for move
+                const SgUctNode* child = NULL;
+                for (SgUctChildIterator it(*initTree, *node); it; ++it) {
+                    if ((*it).Move() - FIRST_CELL == stateDiff[i] % boardSize) {
+                        child = &*it;
+                    }
+                }
+                if (!child) {
+                    std::cout << "child was null! everything might be broken now" << std::endl;
+                    std::vector<SgUctMoveInfo> children;
+                    children.push_back(SgUctMoveInfo(stateDiff[i]));
+                    initTree->CreateChildren(0, *node, children);
+                }
+                node = child;
+            }
+
+            initTree->MergeChildren(0, *node, moves, false);
+
+            if (stateDiff.size() < 1) {
+                stateDiff.push_back(bestMove - FIRST_CELL + (1 - player) * boardSize);
+                evalMoves.push_back(stateDiff);
+            }
+        }
+
 
         timer.Stop();
         LogInfo() << "Time for neural net: " << timer.GetTime() << "s\n";

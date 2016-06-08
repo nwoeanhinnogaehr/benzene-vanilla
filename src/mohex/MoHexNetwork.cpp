@@ -10,7 +10,7 @@ using namespace benzene;
 
 MoHexNetwork::MoHexNetwork() : m_eval() {}
 
-void MoHexNetwork::Evaluate(StoneBoard &board, HexColor toPlay, double *scores)
+void MoHexNetwork::Evaluate(StoneBoard &board, HexColor toPlay, double *scores, std::vector<int> diff)
 {
     // 13x13 only for now
     const int boardN = 13;
@@ -24,6 +24,10 @@ void MoHexNetwork::Evaluate(StoneBoard &board, HexColor toPlay, double *scores)
         HexPoint point = HexPointUtil::coordsToPoint(x, y);
         HexColor color = static_cast<HexColor>(1 - i / boardSize);
         netState[i] = board.IsColor(point, color);
+    }
+
+    for (size_t i = 0; i < diff.size(); i++) {
+        netState[diff[i]] = true;
     }
 
     m_eval.evaluate(netState, 1 - toPlay, scores);
