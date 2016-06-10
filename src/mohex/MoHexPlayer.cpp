@@ -192,7 +192,12 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                     maxScore = score;
                     bestMove = *it;
                 }
-                SgUctValue cnnStrength = (float)initTree->NuNodes() / m_cnn_strength;
+                size_t numNodes = initTree->NuNodes();
+                SgUctValue cnnStrength;
+                if (numNodes > 0)
+                    cnnStrength = (float)numNodes / m_cnn_strength;
+                else
+                    cnnStrength = 100000;
                 moveInfo.Add(score, score * cnnStrength);
                 moves.push_back(moveInfo);
             }
