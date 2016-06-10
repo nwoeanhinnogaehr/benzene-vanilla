@@ -50,10 +50,10 @@ MoHexPlayer::MoHexPlayer()
       m_max_time(10),
       m_useTimeManagement(false),
       m_reuse_subtree(true),
+      m_cnn_strength(100),
       m_ponder(false),
       m_performPreSearch(true),
-      m_useRootData(true),
-      m_cnn_strength(100)
+      m_useRootData(true)
 {
 }
 
