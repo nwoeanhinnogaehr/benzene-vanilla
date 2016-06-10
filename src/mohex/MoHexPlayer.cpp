@@ -185,12 +185,12 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             std::vector<SgUctMoveInfo> moves;
             SgUctValue maxScore = 0;
             SgMove bestMove = -1;
-            for (BitsetIterator it(data.rootConsider); it; ++it) {
-                SgUctMoveInfo moveInfo = SgUctMoveInfo(*it);
-                double score = scores[*it - FIRST_CELL];
+            for (int it = 0; it < boardSize; ++it) {
+                SgUctMoveInfo moveInfo = SgUctMoveInfo(it + FIRST_CELL);
+                double score = scores[it];
                 if (score >= maxScore) {
                     maxScore = score;
-                    bestMove = *it;
+                    bestMove = it + FIRST_CELL;
                 }
                 size_t numNodes = initTree->NuNodes();
                 SgUctValue cnnStrength;
