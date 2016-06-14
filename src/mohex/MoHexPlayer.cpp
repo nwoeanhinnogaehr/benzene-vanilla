@@ -176,7 +176,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             std::vector<int> stateDiff = evalMoves.back();
             evalMoves.pop_back();
 
-            HexColor player = static_cast<HexColor>(state.ToPlay() - stateDiff.size() % 2);
+            HexColor player = static_cast<HexColor>((state.ToPlay() + stateDiff.size()) % 2);
 
             double scores[boardN*boardN];
             m_network.Evaluate(board, player, scores, stateDiff);
@@ -184,20 +184,21 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             // create vector of move info to insert into the tree
             std::vector<SgUctMoveInfo> moves;
             SgUctValue maxScore = 0;
-            SgMove bestMove = -1;
+            int bestMove = -1;
             for (int it = 0; it < boardSize; ++it) {
                 SgUctMoveInfo moveInfo = SgUctMoveInfo(it + FIRST_CELL);
                 double score = scores[it];
                 if (score >= maxScore) {
                     maxScore = score;
-                    bestMove = it + FIRST_CELL;
+                    bestMove = it;
                 }
                 size_t numNodes = initTree->NuNodes();
                 SgUctValue cnnStrength;
                 if (numNodes > 0)
                     cnnStrength = (float)numNodes / m_cnn_strength;
                 else
-                    cnnStrength = 100000;
+                    // todo add param for initial strength
+                    cnnStrength = 150;
                 moveInfo.Add(score, score * cnnStrength);
                 moves.push_back(moveInfo);
             }
@@ -213,7 +214,7 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                     }
                 }
                 if (!child) {
-                    std::cout << "child was null! everything might be broken now" << std::endl;
+                    LogInfo() << "child was null! everything might be broken now\n";
                     std::vector<SgUctMoveInfo> children;
                     children.push_back(SgUctMoveInfo(stateDiff[i]));
                     initTree->CreateChildren(0, *node, children);
@@ -223,8 +224,9 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
 
             initTree->MergeChildren(0, *node, moves, false);
 
-            if (stateDiff.size() < 1) {
-                stateDiff.push_back(bestMove - FIRST_CELL + player * boardSize);
+            // todo add param for depth
+            if (stateDiff.size() < 0) {
+                stateDiff.push_back(bestMove + player * boardSize);
                 evalMoves.push_back(stateDiff);
             }
         }
