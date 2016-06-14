@@ -18,10 +18,11 @@ void MoHexNetwork::Evaluate(StoneBoard &board, HexColor toPlay, double *scores, 
     BenzeneAssert(board.Width() == boardN && board.Height() == boardN);
 
     bool netState[2 * boardSize];
+    double netScores[boardSize];
     for (int i = 0; i < boardSize * 2; i++) {
-        int x = i % boardN;
+        int x = (i % boardN);
         int y = (i / boardN) % boardN;
-        HexPoint point = HexPointUtil::coordsToPoint(x, y);
+        HexPoint point = HexPointUtil::coordsToPoint(y, x);
         HexColor color = static_cast<HexColor>(1 - i / boardSize);
         netState[i] = board.IsColor(point, color);
     }
@@ -30,7 +31,11 @@ void MoHexNetwork::Evaluate(StoneBoard &board, HexColor toPlay, double *scores, 
         netState[diff[i]] = true;
     }
 
-    m_eval.evaluate(netState, 1 - toPlay, scores);
+    m_eval.evaluate(netState, 1 - toPlay, netScores);
+
+    for (int x = 0; x < boardN; x++)
+        for (int y = 0; y < boardN; y++)
+            scores[x + y * boardN] = netScores[y + x * boardN];
 }
 
 //----------------------------------------------------------------------------
