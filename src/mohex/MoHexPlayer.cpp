@@ -199,8 +199,8 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                     //cnnStrength = (float)numNodes / m_cnn_strength;
                 //else
                     // todo add param for initial strength
-                    cnnStrength = 300;
-                moveInfo.Add(1, score * cnnStrength);
+                cnnStrength = m_cnn_strength;
+                moveInfo.Add(score * 0.5 + 0.5, score * cnnStrength);
                 moves.push_back(moveInfo);
             }
 
