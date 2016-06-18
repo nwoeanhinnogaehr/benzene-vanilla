@@ -50,7 +50,13 @@ MoHexPlayer::MoHexPlayer()
       m_max_time(10),
       m_useTimeManagement(false),
       m_reuse_subtree(true),
-      m_cnn_strength(100),
+      m_use_neural_net(false),
+      m_b_cnn_strength(1000),
+      m_w_cnn_strength(1000),
+      m_b_cnn_min_strength(10),
+      m_w_cnn_min_strength(10),
+      m_b_cnn_init_strength(150),
+      m_w_cnn_init_strength(150),
       m_ponder(false),
       m_performPreSearch(true),
       m_useRootData(true)
@@ -77,7 +83,12 @@ void MoHexPlayer::CopySettingsFrom(const MoHexPlayer& other)
     SetReuseSubtree(other.ReuseSubtree());
     SetUseRootData(other.UseRootData());
     SetUseNeuralNet(other.UseNeuralNet());
-    SetCNNStrength(other.CNNStrength());
+    SetBCNNStrength(other.BCNNStrength());
+    SetWCNNStrength(other.WCNNStrength());
+    SetBCNNMinStrength(other.BCNNMinStrength());
+    SetWCNNMinStrength(other.WCNNMinStrength());
+    SetBCNNInitStrength(other.BCNNInitStrength());
+    SetWCNNInitStrength(other.WCNNInitStrength());
     Search().SetMaxNodes(other.Search().MaxNodes());
     Search().SetNumberThreads(other.Search().NumberThreads());
     Search().SetFirstPlayUrgency(other.Search().FirstPlayUrgency());
@@ -195,12 +206,17 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                 }
                 size_t numNodes = initTree->NuNodes();
                 SgUctValue cnnStrength;
-                //if (numNodes > 0)
-                    //cnnStrength = (float)numNodes / m_cnn_strength;
-                //else
-                    // todo add param for initial strength
-                cnnStrength = m_cnn_strength;
-                moveInfo.Add(score * 0.5 + 0.5, score * cnnStrength);
+                if (numNodes > 0)
+                    if (player == BLACK)
+                        cnnStrength = std::max((float)numNodes / m_b_cnn_strength, m_b_cnn_min_strength);
+                    else
+                        cnnStrength = std::max((float)numNodes / m_w_cnn_strength, m_w_cnn_min_strength);
+                else
+                    if (player == BLACK)
+                        cnnStrength = m_b_cnn_init_strength;
+                    else
+                        cnnStrength = m_w_cnn_init_strength;
+                moveInfo.Add(score, score * cnnStrength);
                 moves.push_back(moveInfo);
             }
 

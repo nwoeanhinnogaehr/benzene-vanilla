@@ -354,8 +354,18 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
             << m_timeControlOverride << '\n'
             << "[string] uct_bias_constant "
             << search.UctBiasConstant() << '\n'
-            << "[string] cnn_strength "
-            << m_player.CNNStrength() << '\n';
+            << "[string] b_cnn_strength "
+            << m_player.BCNNStrength() << '\n'
+            << "[string] w_cnn_strength "
+            << m_player.WCNNStrength() << '\n'
+            << "[string] b_cnn_min_strength "
+            << m_player.BCNNMinStrength() << '\n'
+            << "[string] w_cnn_min_strength "
+            << m_player.WCNNMinStrength() << '\n'
+            << "[string] b_cnn_init_strength "
+            << m_player.BCNNInitStrength() << '\n'
+            << "[string] w_cnn_init_strength "
+            << m_player.WCNNInitStrength() << '\n';
     }
     else if (cmd.NuArg() == 2)
     {
@@ -388,8 +398,18 @@ void MoHexEngine::MoHexParam(HtpCommand& cmd)
            m_player.SetReuseSubtree(cmd.Arg<bool>(1));
         else if (name == "use_neural_net")
            m_player.SetUseNeuralNet(cmd.Arg<bool>(1));
-        else if (name == "cnn_strength")
-           m_player.SetCNNStrength(cmd.Arg<float>(1));
+        else if (name == "b_cnn_strength")
+           m_player.SetBCNNStrength(cmd.Arg<float>(1));
+        else if (name == "w_cnn_strength")
+           m_player.SetWCNNStrength(cmd.Arg<float>(1));
+        else if (name == "b_cnn_min_strength")
+           m_player.SetBCNNMinStrength(cmd.Arg<float>(1));
+        else if (name == "w_cnn_min_strength")
+           m_player.SetWCNNMinStrength(cmd.Arg<float>(1));
+        else if (name == "b_cnn_init_strength")
+           m_player.SetBCNNInitStrength(cmd.Arg<float>(1));
+        else if (name == "w_cnn_init_strength")
+           m_player.SetWCNNInitStrength(cmd.Arg<float>(1));
         else if (name == "bias_term")
             search.SetBiasTermConstant(cmd.Arg<float>(1));
         else if (name == "uct_bias_constant")

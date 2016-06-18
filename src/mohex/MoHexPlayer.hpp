@@ -96,10 +96,20 @@ public:
     void SetUseNeuralNet(bool flag);
 
     /** Neural net bias strength */
-    float CNNStrength() const;
+    float BCNNStrength() const;
+    float WCNNStrength() const;
+    float BCNNMinStrength() const;
+    float WCNNMinStrength() const;
+    float BCNNInitStrength() const;
+    float WCNNInitStrength() const;
 
     /** See CNNStrength() */
-    void SetCNNStrength(float val);
+    void SetBCNNStrength(float val);
+    void SetWCNNStrength(float val);
+    void SetBCNNMinStrength(float val);
+    void SetWCNNMinStrength(float val);
+    void SetBCNNInitStrength(float val);
+    void SetWCNNInitStrength(float val);
 
     /** Searches while waiting for a command. */
     bool Ponder() const;
@@ -148,7 +158,12 @@ protected:
     bool m_use_neural_net;
 
     /** See CNNStrength() */
-    float m_cnn_strength;
+    float m_b_cnn_strength;
+    float m_w_cnn_strength;
+    float m_b_cnn_min_strength;
+    float m_w_cnn_min_strength;
+    float m_b_cnn_init_strength;
+    float m_w_cnn_init_strength;
 
     /** See Ponder() */
     bool m_ponder;
@@ -272,14 +287,55 @@ inline void MoHexPlayer::SetUseNeuralNet(bool flag)
     m_use_neural_net = flag;
 }
 
-inline float MoHexPlayer::CNNStrength() const
+inline float MoHexPlayer::BCNNStrength() const
 {
-    return m_cnn_strength;
+    return m_b_cnn_strength;
+}
+inline float MoHexPlayer::WCNNStrength() const
+{
+    return m_w_cnn_strength;
+}
+inline float MoHexPlayer::BCNNMinStrength() const
+{
+    return m_b_cnn_min_strength;
+}
+inline float MoHexPlayer::WCNNMinStrength() const
+{
+    return m_w_cnn_min_strength;
+}
+inline float MoHexPlayer::BCNNInitStrength() const
+{
+    return m_b_cnn_init_strength;
+}
+inline float MoHexPlayer::WCNNInitStrength() const
+{
+    return m_w_cnn_init_strength;
 }
 
-inline void MoHexPlayer::SetCNNStrength(float val)
+
+inline void MoHexPlayer::SetBCNNStrength(float val)
 {
-    m_cnn_strength = val;
+    m_b_cnn_strength = val;
+}
+inline void MoHexPlayer::SetWCNNStrength(float val)
+{
+    m_w_cnn_strength = val;
+}
+inline void MoHexPlayer::SetBCNNMinStrength(float val)
+{
+    m_b_cnn_min_strength = val;
+}
+inline void MoHexPlayer::SetWCNNMinStrength(float val)
+{
+    m_w_cnn_min_strength = val;
+}
+inline void MoHexPlayer::SetBCNNInitStrength(float val)
+{
+    m_b_cnn_init_strength = val;
+}
+inline void MoHexPlayer::SetWCNNInitStrength(float val)
+{
+    m_w_cnn_init_strength = val;
 }
 
 inline bool MoHexPlayer::Ponder() const
