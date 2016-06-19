@@ -192,6 +192,20 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
             double scores[boardN*boardN];
             m_network.Evaluate(board, player, scores, stateDiff);
 
+            // calculate final CNN strength
+            size_t numNodes = initTree->NuNodes();
+            SgUctValue cnnStrength;
+            if (numNodes > 1)
+                if (player == BLACK)
+                    cnnStrength = std::max((float)numNodes / m_b_cnn_strength, m_b_cnn_min_strength);
+                else
+                    cnnStrength = std::max((float)numNodes / m_w_cnn_strength, m_w_cnn_min_strength);
+            else
+                if (player == BLACK)
+                    cnnStrength = m_b_cnn_init_strength;
+                else
+                    cnnStrength = m_w_cnn_init_strength;
+
             // create vector of move info to insert into the tree
             std::vector<SgUctMoveInfo> moves;
             SgUctValue maxScore = 0;
@@ -204,18 +218,6 @@ HexPoint MoHexPlayer::Search(const HexState& state, const Game& game,
                     maxScore = score;
                     bestMove = i;
                 }
-                size_t numNodes = initTree->NuNodes();
-                SgUctValue cnnStrength;
-                if (numNodes > 0)
-                    if (player == BLACK)
-                        cnnStrength = std::max((float)numNodes / m_b_cnn_strength, m_b_cnn_min_strength);
-                    else
-                        cnnStrength = std::max((float)numNodes / m_w_cnn_strength, m_w_cnn_min_strength);
-                else
-                    if (player == BLACK)
-                        cnnStrength = m_b_cnn_init_strength;
-                    else
-                        cnnStrength = m_w_cnn_init_strength;
                 moveInfo.Add(score, score * cnnStrength);
                 moves.push_back(moveInfo);
             }
