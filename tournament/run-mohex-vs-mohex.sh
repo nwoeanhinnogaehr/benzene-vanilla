@@ -20,4 +20,4 @@ if [ $# != 2 ]; then
     exit 1;
 fi
 
-run_tournament ../src/mohex/mohex $1 ../src/mohex/mohex $2
+run_tournament ../bookwrapper/wrap.py $1 ../bookwrapper/wrap.py $2

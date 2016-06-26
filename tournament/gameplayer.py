@@ -57,11 +57,11 @@ class GamePlayer:
         moves = opening.split(' ')
         for move in moves:
             if self._blackToMove:
-                self._sendCommand(self._black, "play b " + move)
-                self._sendCommand(self._white, "play b " + move)
+                self._sendCommand(self._black, "play black " + move)
+                self._sendCommand(self._white, "play black " + move)
             else:
-                self._sendCommand(self._black, "play w " + move)
-                self._sendCommand(self._white, "play w " + move)
+                self._sendCommand(self._black, "play white " + move)
+                self._sendCommand(self._white, "play white " + move)
             self._game.addMove(move)
             self.adjustToMove(move)
             self.showBoard()            
@@ -74,20 +74,20 @@ class GamePlayer:
         while not resigned:
             if self._blackToMove:
                 start = time.time()
-                move = self._sendCommand(self._black, "genmove b")
+                move = self._sendCommand(self._black, "genmove black")
                 elapsedBlack = elapsedBlack + (time.time() - start)
             else:
                 start = time.time()                
-                move = self._sendCommand(self._white, "genmove w")
+                move = self._sendCommand(self._white, "genmove white")
                 elapsedWhite = elapsedWhite + (time.time() - start)
                 
             move = string.lower(string.strip(move))
             self._game.addMove(move)
             
             if self._blackToMove:
-                self._sendCommand(self._white, "play b " + move)
+                self._sendCommand(self._white, "play black " + move)
             else:
-                self._sendCommand(self._black, "play w " + move)
+                self._sendCommand(self._black, "play white " + move)
            
             if string.find(move, "resign") >= 0:
                 resigned = True
